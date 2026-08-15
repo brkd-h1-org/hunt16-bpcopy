@@ -34,10 +34,3 @@ pull_request_rules:
       - label = rb
     actions:
       rebase:
-
-  - name: delete-head-on-close
-    conditions:
-      - closed
-    actions:
-      delete_head_branch:
-        force: true
