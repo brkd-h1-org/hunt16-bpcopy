@@ -1,0 +1,42 @@
+name: lowpriv-actor
+on:
+  workflow_dispatch:
+    inputs:
+      op:
+        required: true
+        default: comment
+      target:
+        required: true
+      body:
+        required: true
+      head:
+        required: false
+        default: main
+      extra:
+        required: false
+        default: main
+permissions:
+  pull-requests: write
+  issues: write
+jobs:
+  say:
+    runs-on: ubuntu-latest
+    steps:
+      - name: act as github-actions[bot] with pull-requests:write only
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OP: ${{ inputs.op }}
+          TARGET: ${{ inputs.target }}
+          BODY: ${{ inputs.body }}
+          HEAD: ${{ inputs.head }}
+          EXTRA: ${{ inputs.extra }}
+        run: |
+          printf '%s' "$BODY" > /tmp/b.txt
+          case "$OP" in
+            comment) gh api "repos/$GITHUB_REPOSITORY/issues/$TARGET/comments" -F body=@/tmp/b.txt ;;
+            label)   gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$TARGET/labels" -f "labels[]=$BODY" ;;
+            openpr)
+              gh api "repos/$GITHUB_REPOSITORY/pulls"                 -F title="$BODY" -F head="$HEAD" -F base="$EXTRA"                 -F body="opened by github-actions[bot]"
+              ;;
+            put)     gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/lab/gha-write.txt" -f message=x -f content=aGFjawo= -f branch="$HEAD" ;;
+          esac
